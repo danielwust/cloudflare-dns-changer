@@ -3,9 +3,10 @@
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "noImplicitAny": false,
     "module": "CommonJS",
     "target": "ES2020",
     "outDir": "dist",
-    "strict": true
+    "strict": true,
   }
 }
