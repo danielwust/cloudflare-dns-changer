@@ -18,7 +18,8 @@ const showHelp = (exitCode) => {
   console.log('  node . create <domain> <ip> [proxied]  -> Create a new DNS record');
   console.log('  node . delete <index>  -> Delete a DNS record');
   console.log('  node . update <index> <ip> [proxied]  -> Update an existing DNS record');
-  console.log('  node . update-auto <index>  -> Update an existing DNS record with current local IP');
+  console.log('  node . refresh-by-index <index>  -> Update existing DNS with local IP using COMMENT');
+  console.log('  node . refresh-by-comment <comment>  -> Update existing DNS with local IP using INDEX');
 
   if (exitCode !== undefined) process.exit(exitCode);
 };
@@ -58,8 +59,9 @@ const confirmAction = async (oldRecord, newRecord) => {
   });
 };
 
-const createRecord = async (domain, ip, proxied = false) => {
-  const newRecord = { type: 'A', name: domain, content: ip, ttl: 120, proxied };
+// Comment param is allowed on editing
+const createRecord = async (domain, ip, proxied) => {
+  const newRecord = { type: 'A', name: domain, content: ip, ttl: 120, proxied: proxied == 'true' };
   const confirmation = await confirmAction({}, newRecord);
 
   if (confirmation) console.log('Record created:', (
@@ -67,8 +69,12 @@ const createRecord = async (domain, ip, proxied = false) => {
   );
 };
 
-const updateRecord = async (recordId, oldRecord, newIp, proxied) => {
-  const updatedRecord = { name: oldRecord.name, type: oldRecord.type, content: newIp, ttl: 120, proxied };
+const updateRecord = async (recordId, oldRecord, newIp, useProxy?) => {
+  const proxiedFalse = useProxy == 'false' ? false : oldRecord.proxied;
+  const proxiedTrue = useProxy == 'true' ? true : undefined;
+  const proxied = proxiedTrue || proxiedFalse;
+
+  const updatedRecord = { ...oldRecord, content: newIp, ttl: 120, proxied };
   const confirmation = await confirmAction(oldRecord, updatedRecord);
 
   if (confirmation) console.log('Record updated:', (
@@ -82,6 +88,17 @@ const deleteRecord = async (recordId, record) => {
   if (confirmation) console.log('Record deleted:', (
     await axios.delete(`${API_URL}/${recordId}`, { headers: HEADERS })).data
   );
+};
+
+const updateRecordByDomain = async (comment, records) => {
+  const record = records && records.length && records.find(r => r.comment === comment);
+
+  if (!record) {
+    console.error(`Record not found for domain: ${comment}.`);
+    process.exit(1);
+  }
+
+  await updateRecord(record.id, record, await getPublicIP(), record.proxied);
 };
 
 const getPublicIP = async () => {
@@ -111,10 +128,11 @@ const main = async () => {
     return process.exit(1);
   }
 
-  if (args[0] === 'create' && args.length >= 3) await createRecord(args[1], args[2], args[3] === 'true');
+  if (args[0] === 'create' && args.length >= 3) await createRecord(args[1], args[2], args[3]);
   else if (args[0] === 'delete' && args.length >= 2) await deleteRecord(records[index].id, records[index]);
-  else if (args[0] === 'update-auto' && args.length >= 2) await updateRecord(records[index].id, records[index], await getPublicIP(), records[index].proxied);
-  else if (args[0] === 'update' && args.length >= 3) await updateRecord(records[index].id, records[index], args[2], args[3] === 'true' ? true : args[3] === 'false' ? false : records[index].proxied);
+  else if (args[0] === 'refresh-by-comment' && args.length >= 2) await updateRecordByDomain(args[1], records);
+  else if (args[0] === 'refresh-by-index' && args.length >= 2) await updateRecord(records[index].id, records[index], await getPublicIP(), records[index].proxied);
+  else if (args[0] === 'update' && args.length >= 3) await updateRecord(records[index].id, records[index], args[2], args[3] || records[index].proxied);
 
   process.exit(0);
 };
