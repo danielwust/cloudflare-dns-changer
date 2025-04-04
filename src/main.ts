@@ -18,8 +18,8 @@ const showHelp = (exitCode) => {
   console.log('  node . create <domain> <ip> [proxied]  -> Create a new DNS record');
   console.log('  node . delete <index>  -> Delete a DNS record');
   console.log('  node . update <index> <ip> [proxied]  -> Update an existing DNS record');
-  console.log('  node . refresh-by-index <index>  -> Update existing DNS with local IP using COMMENT');
-  console.log('  node . refresh-by-comment <comment>  -> Update existing DNS with local IP using INDEX');
+  console.log('  node . refresh-by-index <index>  -> Update existing DNS with local IP using INDEX');
+  console.log('  node . refresh-by-comment <comment>  -> Update existing DNS with local IP using COMMENT');
 
   if (exitCode !== undefined) process.exit(exitCode);
 };
