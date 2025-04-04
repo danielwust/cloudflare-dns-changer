@@ -26,9 +26,10 @@ It allows you to list, create, update, delete, and auto refresh DNS records usin
 ## 📁 Installation
 
 ```bash
-git clone https://github.com/your-username/cloudflare-dns-cli.git
-cd cloudflare-dns-cli
+git clone https://github.com/danielwust/cloudflare-dns-changer.git
+cd cloudflare-dns-changer
 npm install
+npm run build
 ```
 
 ---
